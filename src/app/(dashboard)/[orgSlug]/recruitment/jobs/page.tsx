@@ -7,7 +7,7 @@ import { getJobPostings } from "@/actions/recruitment.actions";
 import { JobPostingsTable } from "@/components/modules/recruitment/job-postings-table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { JobPostingStatus } from "@prisma/client";
+import type { JobStatus } from "@prisma/client";
 
 export default async function RecruitmentJobsPage({
   params,
@@ -24,24 +24,21 @@ export default async function RecruitmentJobsPage({
 
   const user = await prisma.user.findUnique({
     where:  { id: session.user.id },
-    select: { organizationId: true, branchId: true, systemRole: true },
+    select: { organizationId: true, systemRole: true },
   });
   if (!user?.organizationId) redirect("/select-org");
 
   const result = await getJobPostings({
     organizationId: user.organizationId,
-    branchId:       user.systemRole === "HR_MANAGER" ? (user.branchId ?? undefined) : undefined,
-    status:         sp.status as JobPostingStatus | undefined,
+    status:         sp.status as JobStatus | undefined,
     page:           sp.page ? parseInt(sp.page) : 1,
   });
 
-  // Stats
   const stats = await prisma.jobPosting.groupBy({
-    by:    ["status"],
-    where: { organizationId: user.organizationId },
+    by:     ["status"],
+    where:  { organizationId: user.organizationId },
     _count: { id: true },
   });
-
   const statMap = Object.fromEntries(stats.map(s => [s.status, s._count.id]));
 
   return (
@@ -53,9 +50,7 @@ export default async function RecruitmentJobsPage({
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/${orgSlug}/recruitment/applicants`}>
-            <Button variant="outline" size="sm" className="border-slate-200 text-slate-600">
-              All Applicants
-            </Button>
+            <Button variant="outline" size="sm" className="border-slate-200 text-slate-600">All Applicants</Button>
           </Link>
           <Link href={`/${orgSlug}/recruitment/jobs/new`}>
             <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -65,13 +60,12 @@ export default async function RecruitmentJobsPage({
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Open",   value: statMap["OPEN"]   ?? 0, color: "text-green-600" },
-          { label: "Draft",  value: statMap["DRAFT"]  ?? 0, color: "text-slate-500" },
-          { label: "Paused", value: statMap["PAUSED"] ?? 0, color: "text-yellow-600" },
-          { label: "Closed", value: statMap["CLOSED"] ?? 0, color: "text-red-500"   },
+          { label: "Open",    value: statMap["OPEN"]    ?? 0, color: "text-green-600" },
+          { label: "Draft",   value: statMap["DRAFT"]   ?? 0, color: "text-slate-500" },
+          { label: "On Hold", value: statMap["ON_HOLD"] ?? 0, color: "text-yellow-600" },
+          { label: "Closed",  value: statMap["CLOSED"]  ?? 0, color: "text-red-500"   },
         ].map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4">
             <div className={`text-2xl font-bold mb-0.5 ${stat.color}`}>{stat.value}</div>

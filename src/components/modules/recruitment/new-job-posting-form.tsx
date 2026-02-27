@@ -8,17 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowLeft } from "lucide-react";
+import type { EmploymentType } from "@prisma/client";
 
 type Props = {
   organizationId: string;
-  departments:    { id: string; name: string }[];
-  branches:       { id: string; name: string }[];
+  positions:      { id: string; title: string }[];
   orgSlug:        string;
 };
 
-export function NewJobPostingForm({ organizationId, departments, branches, orgSlug }: Props) {
+export function NewJobPostingForm({ organizationId, positions, orgSlug }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
@@ -27,21 +26,17 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
     description:      "",
     requirements:     "",
     responsibilities: "",
-    type:             "FULL_TIME",
+    employmentType:   "FULL_TIME" as EmploymentType,
     location:         "",
-    isRemote:         false,
     salaryMin:        "",
     salaryMax:        "",
     currency:         "USD",
     openings:         "1",
     deadline:         "",
-    experienceMin:    "",
-    experienceMax:    "",
-    departmentId:     "",
-    branchId:         "",
+    positionId:       "",
   });
 
-  function set(field: string, value: string | boolean) {
+  function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -54,20 +49,16 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
       organizationId,
       title:            form.title,
       description:      form.description,
-      requirements:     form.requirements     || undefined,
+      requirements:     form.requirements      || undefined,
       responsibilities: form.responsibilities  || undefined,
-      type:             form.type,
+      employmentType:   form.employmentType,
       location:         form.location          || undefined,
-      isRemote:         form.isRemote,
       salaryMin:        form.salaryMin ? parseFloat(form.salaryMin) : undefined,
       salaryMax:        form.salaryMax ? parseFloat(form.salaryMax) : undefined,
       currency:         form.currency,
       openings:         parseInt(form.openings) || 1,
       deadline:         form.deadline          || undefined,
-      experienceMin:    form.experienceMin ? parseInt(form.experienceMin) : undefined,
-      experienceMax:    form.experienceMax ? parseInt(form.experienceMax) : undefined,
-      departmentId:     form.departmentId      || undefined,
-      branchId:         form.branchId          || undefined,
+      positionId:       form.positionId        || undefined,
     });
 
     setLoading(false);
@@ -83,35 +74,21 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
         <Input value={form.title} onChange={(e) => set("title", e.target.value)} required placeholder="e.g. Senior Frontend Developer" className="border-slate-200" />
       </div>
 
-      {/* Department + Branch */}
+      {/* Position + Type */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label className="text-slate-700 text-sm font-medium">Department</Label>
-          <Select value={form.departmentId || "NONE"} onValueChange={(v) => set("departmentId", v === "NONE" ? "" : v)}>
-            <SelectTrigger className="border-slate-200"><SelectValue placeholder="Select" /></SelectTrigger>
+          <Label className="text-slate-700 text-sm font-medium">Linked Position</Label>
+          <Select value={form.positionId || "NONE"} onValueChange={(v) => set("positionId", v === "NONE" ? "" : v)}>
+            <SelectTrigger className="border-slate-200"><SelectValue placeholder="Select position" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="NONE">No department</SelectItem>
-              {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              <SelectItem value="NONE">No linked position</SelectItem>
+              {positions.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-slate-700 text-sm font-medium">Branch</Label>
-          <Select value={form.branchId || "NONE"} onValueChange={(v) => set("branchId", v === "NONE" ? "" : v)}>
-            <SelectTrigger className="border-slate-200"><SelectValue placeholder="All branches" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="NONE">All branches</SelectItem>
-              {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Type + Openings + Deadline */}
-      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label className="text-slate-700 text-sm font-medium">Employment Type *</Label>
-          <Select value={form.type} onValueChange={(v) => set("type", v)}>
+          <Select value={form.employmentType} onValueChange={(v) => set("employmentType", v)}>
             <SelectTrigger className="border-slate-200"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="FULL_TIME">Full Time</SelectItem>
@@ -122,6 +99,10 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Openings + Deadline + Location */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label className="text-slate-700 text-sm font-medium">Openings *</Label>
           <Input type="number" min="1" value={form.openings} onChange={(e) => set("openings", e.target.value)} required className="border-slate-200" />
@@ -130,27 +111,10 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
           <Label className="text-slate-700 text-sm font-medium">Deadline</Label>
           <Input type="date" value={form.deadline} onChange={(e) => set("deadline", e.target.value)} className="border-slate-200" />
         </div>
-      </div>
-
-      {/* Location + Remote */}
-      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-slate-700 text-sm font-medium">Location</Label>
           <Input value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. New York, NY" className="border-slate-200" />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-slate-700 text-sm font-medium">Experience (years)</Label>
-          <div className="flex gap-2">
-            <Input type="number" min="0" value={form.experienceMin} onChange={(e) => set("experienceMin", e.target.value)} placeholder="Min" className="border-slate-200" />
-            <Input type="number" min="0" value={form.experienceMax} onChange={(e) => set("experienceMax", e.target.value)} placeholder="Max" className="border-slate-200" />
-          </div>
-        </div>
-      </div>
-
-      {/* Remote toggle */}
-      <div className="flex items-center gap-2">
-        <Checkbox id="remote" checked={form.isRemote} onCheckedChange={(v) => set("isRemote", !!v)} />
-        <Label htmlFor="remote" className="text-slate-700 text-sm cursor-pointer">Remote position</Label>
       </div>
 
       {/* Salary */}
@@ -194,16 +158,14 @@ export function NewJobPostingForm({ organizationId, departments, branches, orgSl
         <Textarea value={form.requirements} onChange={(e) => set("requirements", e.target.value)} rows={4} placeholder="Required skills and qualifications..." className="border-slate-200 resize-none" />
       </div>
 
-      {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>}
 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" className="border-slate-200" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
         </Button>
         <Button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post Job"}
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Job Posting"}
         </Button>
       </div>
     </form>

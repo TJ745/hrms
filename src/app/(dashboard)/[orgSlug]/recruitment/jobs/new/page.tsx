@@ -15,22 +15,15 @@ export default async function NewJobPostingPage({
 
   const user = await prisma.user.findUnique({
     where:  { id: session.user.id },
-    select: { organizationId: true, branchId: true, systemRole: true },
+    select: { organizationId: true, systemRole: true },
   });
   if (!user?.organizationId) redirect("/select-org");
 
-  const [departments, branches] = await Promise.all([
-    prisma.department.findMany({
-      where:   { organizationId: user.organizationId, isActive: true },
-      select:  { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.branch.findMany({
-      where:   { organizationId: user.organizationId, isActive: true },
-      select:  { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const positions = await prisma.position.findMany({
+    where:   { organizationId: user.organizationId, isActive: true },
+    select:  { id: true, title: true },
+    orderBy: { title: "asc" },
+  });
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -40,8 +33,7 @@ export default async function NewJobPostingPage({
       </div>
       <NewJobPostingForm
         organizationId={user.organizationId}
-        departments={departments}
-        branches={branches}
+        positions={positions}
         orgSlug={orgSlug}
       />
     </div>

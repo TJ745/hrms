@@ -10,27 +10,26 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronLeft, ChevronRight, MoreHorizontal, Eye, Users, PauseCircle, XCircle, CheckCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import type { JobStatus } from "@prisma/client";
 
 const STATUS_STYLES: Record<string, string> = {
-  DRAFT:  "bg-slate-50 text-slate-600 border-slate-200",
-  OPEN:   "bg-green-50 text-green-700 border-green-200",
-  PAUSED: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  CLOSED: "bg-red-50 text-red-600 border-red-200",
+  DRAFT:   "bg-slate-50 text-slate-600 border-slate-200",
+  OPEN:    "bg-green-50 text-green-700 border-green-200",
+  ON_HOLD: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  CLOSED:  "bg-red-50 text-red-600 border-red-200",
 };
 
 type Posting = {
-  id:          string;
-  title:       string;
-  type:        string;
-  status:      string;
-  location:    string | null;
-  isRemote:    boolean;
-  openings:    number;
-  deadline:    Date | null;
-  createdAt:   Date;
-  department:  { name: string } | null;
-  branch:      { name: string } | null;
-  _count:      { applications: number };
+  id:             string;
+  title:          string;
+  employmentType: string;
+  status:         JobStatus;
+  location:       string | null;
+  openings:       number;
+  deadline:       Date | null;
+  createdAt:      Date;
+  position:       { title: string } | null;
+  _count:         { applications: number };
 };
 
 type Props = {
@@ -51,13 +50,12 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
 
   function updateParam(key: string, value: string | null) {
     const params = new URLSearchParams(sp.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
+    if (value) params.set(key, value); else params.delete(key);
     params.delete("page");
     startTransition(() => router.push(`${pathname}?${params.toString()}`));
   }
 
-  async function changeStatus(id: string, status: any) {
+  async function changeStatus(id: string, status: JobStatus) {
     setActing(id);
     await updateJobPostingStatus(id, status, organizationId);
     setActing(null);
@@ -66,24 +64,17 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
 
   return (
     <div className="bg-white rounded-xl border border-slate-200">
-      {/* Filter bar */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 flex-wrap gap-3">
         <h3 className="font-semibold text-slate-800 text-sm">
-          Job Postings
-          <span className="ml-2 text-slate-400 font-normal text-xs">{total} total</span>
+          Job Postings <span className="ml-2 text-slate-400 font-normal text-xs">{total} total</span>
         </h3>
-        <Select
-          value={sp.get("status") ?? "ALL"}
-          onValueChange={(v) => updateParam("status", v === "ALL" ? null : v)}
-        >
-          <SelectTrigger className="h-8 w-32 border-slate-200 text-sm">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
+        <Select value={sp.get("status") ?? "ALL"} onValueChange={(v) => updateParam("status", v === "ALL" ? null : v)}>
+          <SelectTrigger className="h-8 w-32 border-slate-200 text-sm"><SelectValue placeholder="All" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Status</SelectItem>
             <SelectItem value="OPEN">Open</SelectItem>
             <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PAUSED">Paused</SelectItem>
+            <SelectItem value="ON_HOLD">On Hold</SelectItem>
             <SelectItem value="CLOSED">Closed</SelectItem>
           </SelectContent>
         </Select>
@@ -94,7 +85,6 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
           <thead>
             <tr className="border-b border-slate-100">
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Job Title</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Department</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Openings</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Applicants</th>
@@ -105,40 +95,24 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
           </thead>
           <tbody className="divide-y divide-slate-50">
             {postings.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="text-center py-16 text-slate-400 text-sm">
-                  No job postings found
-                </td>
-              </tr>
+              <tr><td colSpan={7} className="text-center py-16 text-slate-400 text-sm">No job postings found</td></tr>
             ) : (
               postings.map((post) => (
                 <tr key={post.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/${orgSlug}/recruitment/jobs/${post.id}`}
-                      className="font-medium text-slate-800 hover:text-blue-600 transition-colors"
-                    >
+                    <Link href={`/${orgSlug}/recruitment/jobs/${post.id}`} className="font-medium text-slate-800 hover:text-blue-600 transition-colors">
                       {post.title}
                     </Link>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {post.branch?.name ?? "All Branches"}
-                      {post.isRemote && " · Remote"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 text-sm">
-                    {post.department?.name ?? <span className="text-slate-300">—</span>}
+                    {post.position && <p className="text-xs text-slate-400 mt-0.5">{post.position.title}</p>}
+                    {post.location && <p className="text-xs text-slate-400">{post.location}</p>}
                   </td>
                   <td className="px-4 py-3 text-slate-500 text-sm capitalize">
-                    {post.type.replace("_", " ").toLowerCase()}
+                    {post.employmentType.replace("_", " ").toLowerCase()}
                   </td>
                   <td className="px-4 py-3 text-slate-600">{post.openings}</td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/${orgSlug}/recruitment/applicants?job=${post.id}`}
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      {post._count.applications}
+                    <Link href={`/${orgSlug}/recruitment/applicants?job=${post.id}`} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                      <Users className="w-3.5 h-3.5" />{post._count.applications}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-500 text-sm">
@@ -148,7 +122,7 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", STATUS_STYLES[post.status])}>
-                      {post.status.charAt(0) + post.status.slice(1).toLowerCase()}
+                      {post.status === "ON_HOLD" ? "On Hold" : post.status.charAt(0) + post.status.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -169,12 +143,17 @@ export function JobPostingsTable({ postings, total, page, totalPages, orgSlug, o
                             <Users className="w-3.5 h-3.5 mr-2" /> View Applicants
                           </Link>
                         </DropdownMenuItem>
-                        {post.status === "OPEN" && (
-                          <DropdownMenuItem onClick={() => changeStatus(post.id, "PAUSED")} className="text-yellow-600">
-                            <PauseCircle className="w-3.5 h-3.5 mr-2" /> Pause
+                        {post.status === "DRAFT" && (
+                          <DropdownMenuItem onClick={() => changeStatus(post.id, "OPEN")} className="text-green-600">
+                            <CheckCircle className="w-3.5 h-3.5 mr-2" /> Publish
                           </DropdownMenuItem>
                         )}
-                        {post.status === "PAUSED" && (
+                        {post.status === "OPEN" && (
+                          <DropdownMenuItem onClick={() => changeStatus(post.id, "ON_HOLD")} className="text-yellow-600">
+                            <PauseCircle className="w-3.5 h-3.5 mr-2" /> Put On Hold
+                          </DropdownMenuItem>
+                        )}
+                        {post.status === "ON_HOLD" && (
                           <DropdownMenuItem onClick={() => changeStatus(post.id, "OPEN")} className="text-green-600">
                             <CheckCircle className="w-3.5 h-3.5 mr-2" /> Reopen
                           </DropdownMenuItem>

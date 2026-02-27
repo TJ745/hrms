@@ -8,44 +8,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, Search, MoreHorizontal, Eye, UserCheck, UserX, Phone, Video, Building } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, MoreHorizontal, Eye, UserCheck, UserX } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { ApplicationStatus } from "@prisma/client";
 
 const STATUS_STYLES: Record<string, string> = {
-  NEW:        "bg-blue-50 text-blue-700 border-blue-200",
-  REVIEWING:  "bg-yellow-50 text-yellow-700 border-yellow-200",
-  SHORTLISTED:"bg-purple-50 text-purple-700 border-purple-200",
-  INTERVIEW:  "bg-indigo-50 text-indigo-700 border-indigo-200",
-  OFFERED:    "bg-green-50 text-green-700 border-green-200",
-  HIRED:      "bg-green-100 text-green-800 border-green-300",
-  REJECTED:   "bg-red-50 text-red-600 border-red-200",
-  WITHDRAWN:  "bg-slate-50 text-slate-500 border-slate-200",
+  APPLIED:   "bg-blue-50 text-blue-700 border-blue-200",
+  SCREENING: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  INTERVIEW: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  OFFER:     "bg-green-50 text-green-700 border-green-200",
+  HIRED:     "bg-green-100 text-green-800 border-green-300",
+  REJECTED:  "bg-red-50 text-red-600 border-red-200",
+  WITHDRAWN: "bg-slate-50 text-slate-500 border-slate-200",
 };
 
 const PIPELINE: { status: ApplicationStatus; label: string }[] = [
-  { status: "NEW",         label: "New"         },
-  { status: "REVIEWING",  label: "Reviewing"   },
-  { status: "SHORTLISTED",label: "Shortlisted" },
-  { status: "INTERVIEW",  label: "Interview"   },
-  { status: "OFFERED",    label: "Offered"     },
-  { status: "HIRED",      label: "Hired"       },
+  { status: "APPLIED",   label: "Applied"    },
+  { status: "SCREENING", label: "Screening"  },
+  { status: "INTERVIEW", label: "Interview"  },
+  { status: "OFFER",     label: "Offer"      },
+  { status: "HIRED",     label: "Hired"      },
 ];
 
 type Application = {
-  id:        string;
-  firstName: string;
-  lastName:  string;
-  email:     string;
-  phone:     string | null;
-  status:    ApplicationStatus;
-  source:    string | null;
-  createdAt: Date;
-  expectedSalary: any;
-  yearsExperience: number | null;
-  jobPosting: { id: string; title: string; department: { name: string } | null };
-  interviews: { scheduledAt: Date; type: string }[];
+  id:          string;
+  firstName:   string;
+  lastName:    string;
+  email:       string;
+  phone:       string | null;
+  status:      ApplicationStatus;
+  source:      string | null;
+  createdAt:   Date;
+  jobPosting:  { id: string; title: string; organizationId: string };
+  interviews:  { scheduledAt: Date; type: string }[];
 };
 
 type Props = {
@@ -105,14 +101,15 @@ export function ApplicantsTable({ applications, jobs, total, page, totalPages, o
             <SelectItem value="ALL">All Status</SelectItem>
             {PIPELINE.map((s) => <SelectItem key={s.status} value={s.status}>{s.label}</SelectItem>)}
             <SelectItem value="REJECTED">Rejected</SelectItem>
+            <SelectItem value="WITHDRAWN">Withdrawn</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Pipeline header */}
+      {/* Pipeline tabs */}
       <div className="flex gap-1 px-4 py-3 border-b border-slate-100 overflow-x-auto">
         {PIPELINE.map((stage) => {
-          const count = applications.filter(a => a.status === stage.status).length;
+          const count  = applications.filter(a => a.status === stage.status).length;
           const active = sp.get("status") === stage.status;
           return (
             <button
@@ -132,14 +129,13 @@ export function ApplicantsTable({ applications, jobs, total, page, totalPages, o
         })}
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-100">
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Applicant</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Job</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Experience</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Applied</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Next Interview</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
@@ -148,9 +144,7 @@ export function ApplicantsTable({ applications, jobs, total, page, totalPages, o
           </thead>
           <tbody className="divide-y divide-slate-50">
             {applications.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">No applications found</td>
-              </tr>
+              <tr><td colSpan={7} className="text-center py-16 text-slate-400 text-sm">No applications found</td></tr>
             ) : (
               applications.map((app) => {
                 const nextInterview = app.interviews[0];
@@ -162,12 +156,9 @@ export function ApplicantsTable({ applications, jobs, total, page, totalPages, o
                       </Link>
                       <p className="text-xs text-slate-400">{app.email}</p>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="text-slate-700">{app.jobPosting.title}</p>
-                      <p className="text-xs text-slate-400">{app.jobPosting.department?.name}</p>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-sm">
-                      {app.yearsExperience != null ? `${app.yearsExperience} yr${app.yearsExperience !== 1 ? "s" : ""}` : <span className="text-slate-300">—</span>}
+                    <td className="px-4 py-3 text-slate-700">{app.jobPosting.title}</td>
+                    <td className="px-4 py-3 text-slate-500 text-sm capitalize">
+                      {app.source?.toLowerCase() ?? <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-slate-500 text-sm">{formatDate(app.createdAt)}</td>
                     <td className="px-4 py-3 text-sm">
@@ -197,10 +188,13 @@ export function ApplicantsTable({ applications, jobs, total, page, totalPages, o
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => moveStatus(app.id, "SHORTLISTED")} className="text-purple-600">
-                            <UserCheck className="w-3.5 h-3.5 mr-2" /> Shortlist
+                          <DropdownMenuItem onClick={() => moveStatus(app.id, "SCREENING")} className="text-yellow-600">
+                            <UserCheck className="w-3.5 h-3.5 mr-2" /> Move to Screening
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => moveStatus(app.id, "OFFERED")} className="text-green-600">
+                          <DropdownMenuItem onClick={() => moveStatus(app.id, "INTERVIEW")} className="text-indigo-600">
+                            <UserCheck className="w-3.5 h-3.5 mr-2" /> Schedule Interview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => moveStatus(app.id, "OFFER")} className="text-green-600">
                             <UserCheck className="w-3.5 h-3.5 mr-2" /> Make Offer
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => moveStatus(app.id, "HIRED")} className="text-green-700">

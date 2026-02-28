@@ -99,7 +99,12 @@ const NAV: NavItem[] = [
     href: "/performance",
     icon: TrendingUp,
     children: [
-      { title: "Reviews", href: "/performance/reviews" },
+      { title: "Reviews", href: "/performance/" },
+      {
+        title: "New Review",
+        href: "/performance/new",
+        roles: ["SUPER_ADMIN", "ORG_ADMIN", "HR_MANAGER"],
+      },
       { title: "Goals", href: "/performance/goals" },
     ],
   },

@@ -124,3 +124,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Thin scrollbar ────────────────────────────────────────── */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.929 0.013 255.508) transparent;
+}
+.dark .overflow-y-auto {
+  scrollbar-color: oklch(0.279 0.041 260.031) transparent;
+}
+.overflow-y-auto::-webkit-scrollbar       { width: 4px; }
+.overflow-y-auto::-webkit-scrollbar-track { background: transparent; }
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: oklch(0.929 0.013 255.508);
+  border-radius: 9999px;
+}
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: oklch(0.279 0.041 260.031);
+}

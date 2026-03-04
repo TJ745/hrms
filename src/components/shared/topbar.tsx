@@ -1,14 +1,17 @@
-import { getNotifications, getUnreadCount } from "@/actions/notification.actions";
+import {
+  getNotifications,
+  getUnreadCount,
+} from "@/actions/notification.actions";
 import { TopbarClient } from "@/components/shared/topbar-client";
 import type { SystemRole } from "@prisma/client";
 
 type Props = {
   user: {
-    id:    string;
-    name:  string;
+    id: string;
+    name: string;
     email: string;
     image: string | null;
-    role:  SystemRole;
+    role: SystemRole;
   };
   orgSlug: string;
 };

@@ -6,8 +6,12 @@ import { Search, LogOut, User, Settings, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/modules/notifications/notification-bell";
@@ -16,35 +20,40 @@ import type { SystemRole, NotificationType } from "@prisma/client";
 
 const ROLE_LABELS: Record<SystemRole, string> = {
   SUPER_ADMIN: "Super Admin",
-  ORG_ADMIN:   "Admin",
-  HR_MANAGER:  "HR Manager",
-  EMPLOYEE:    "Employee",
+  ORG_ADMIN: "Admin",
+  HR_MANAGER: "HR Manager",
+  EMPLOYEE: "Employee",
 };
 
 type Notification = {
-  id:        string;
-  type:      NotificationType;
-  title:     string;
-  body:      string;
-  link:      string | null;
-  isRead:    boolean;
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link: string | null;
+  isRead: boolean;
   createdAt: Date;
 };
 
 type Props = {
   user: {
-    id:    string;
-    name:  string;
+    id: string;
+    name: string;
     email: string;
     image: string | null;
-    role:  SystemRole;
+    role: SystemRole;
   };
-  orgSlug:       string;
+  orgSlug: string;
   notifications: Notification[];
-  unreadCount:   number;
+  unreadCount: number;
 };
 
-export function TopbarClient({ user, orgSlug, notifications, unreadCount }: Props) {
+export function TopbarClient({
+  user,
+  orgSlug,
+  notifications,
+  unreadCount,
+}: Props) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -83,8 +92,12 @@ export function TopbarClient({ user, orgSlug, notifications, unreadCount }: Prop
                 </AvatarFallback>
               </Avatar>
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-slate-800 leading-none mb-0.5">{user.name}</p>
-                <p className="text-xs text-slate-400 leading-none">{ROLE_LABELS[user.role]}</p>
+                <p className="text-sm font-medium text-slate-800 leading-none mb-0.5">
+                  {user.name}
+                </p>
+                <p className="text-xs text-slate-400 leading-none">
+                  {ROLE_LABELS[user.role]}
+                </p>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
@@ -93,20 +106,32 @@ export function TopbarClient({ user, orgSlug, notifications, unreadCount }: Prop
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuLabel>
               <p className="font-medium text-slate-800">{user.name}</p>
-              <p className="text-xs text-slate-400 font-normal mt-0.5 truncate">{user.email}</p>
+              <p className="text-xs text-slate-400 font-normal mt-0.5 truncate">
+                {user.email}
+              </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push(`/${orgSlug}/profile`)}>
+            <DropdownMenuItem
+              onClick={() => router.push(`/${orgSlug}/profile`)}
+            >
               <User className="w-4 h-4 mr-2 text-slate-400" /> My Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/${orgSlug}/notifications`)}>
-              <Settings className="w-4 h-4 mr-2 text-slate-400" /> Notification Preferences
+            <DropdownMenuItem
+              onClick={() => router.push(`/${orgSlug}/notifications`)}
+            >
+              <Settings className="w-4 h-4 mr-2 text-slate-400" /> Notification
+              Preferences
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/${orgSlug}/settings`)}>
+            <DropdownMenuItem
+              onClick={() => router.push(`/${orgSlug}/settings`)}
+            >
               <Settings className="w-4 h-4 mr-2 text-slate-400" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-700 focus:bg-red-50">
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="text-red-600 focus:text-red-700 focus:bg-red-50"
+            >
               <LogOut className="w-4 h-4 mr-2" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

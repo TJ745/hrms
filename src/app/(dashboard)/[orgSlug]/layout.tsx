@@ -23,12 +23,19 @@ export default async function DashboardLayout({
     include: {
       organization: {
         select: {
-          id: true, name: true, slug: true, logo: true, plan: true,
+          id: true,
+          name: true,
+          slug: true,
+          logo: true,
+          plan: true,
         },
       },
       employee: {
         select: {
-          id: true, firstName: true, lastName: true, avatar: true,
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
           branch: { select: { id: true, name: true } },
           department: { select: { id: true, name: true } },
           position: { select: { id: true, title: true } },
@@ -52,17 +59,15 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar
           user={{
-            id:     user.id,
-            name:   user.name,
-            email:  user.email,
-            image:  user.image ?? user.employee?.avatar ?? null,
-            role:   user.systemRole,
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image ?? user.employee?.avatar ?? null,
+            role: user.systemRole,
           }}
           orgSlug={orgSlug}
         />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   );

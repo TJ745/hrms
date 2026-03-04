@@ -217,6 +217,94 @@
 //   );
 // }
 
+// import { headers } from "next/headers";
+// import { redirect } from "next/navigation";
+// import { auth } from "@/lib/auth";
+// import { prisma } from "@/lib/prisma";
+// import {
+//   getHRDashboardStats,
+//   getEmployeeDashboardStats,
+// } from "@/actions/dashboard.actions";
+// import { HRDashboard } from "@/components/modules/dashboard/hr-dashboard";
+// import { EmployeeDashboard } from "@/components/modules/dashboard/employee-dashboard";
+
+// export default async function DashboardPage({
+//   params,
+// }: {
+//   params: Promise<{ orgSlug: string }>;
+// }) {
+//   const { orgSlug } = await params;
+//   const session = await auth.api.getSession({ headers: await headers() });
+//   if (!session) redirect("/login");
+
+//   const user = await prisma.user.findUnique({
+//     where: { id: session.user.id },
+//     include: {
+//       employee: {
+//         include: {
+//           branch: { select: { name: true } },
+//           department: { select: { name: true } },
+//           position: { select: { title: true } },
+//         },
+//       },
+//       organization: { select: { name: true, logo: true } },
+//     },
+//   });
+
+//   if (!user?.organizationId) redirect("/select-org");
+
+//   const isHR = ["SUPER_ADMIN", "ORG_ADMIN", "HR_MANAGER"].includes(
+//     user.systemRole,
+//   );
+
+//   if (isHR) {
+//     const stats = await getHRDashboardStats(
+//       user.organizationId,
+//       user.branchId ?? undefined,
+//     );
+
+//     return (
+//       <HRDashboard
+//         stats={stats}
+//         orgSlug={orgSlug}
+//         organizationName={user.organization?.name ?? ""}
+//         userName={user.name}
+//         userRole={user.systemRole}
+//       />
+//     );
+//   }
+
+//   // Employee dashboard
+//   if (!user.employee) {
+//     return (
+//       <div className="flex items-center justify-center h-64">
+//         <div className="text-center">
+//           <p className="text-slate-500 text-sm">
+//             No employee record found for your account.
+//           </p>
+//           <p className="text-slate-400 text-xs mt-1">
+//             Please contact your HR administrator.
+//           </p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const stats = await getEmployeeDashboardStats(
+//     user.employee.id,
+//     user.organizationId,
+//   );
+
+//   return (
+//     <EmployeeDashboard
+//       stats={stats}
+//       employee={user.employee}
+//       orgSlug={orgSlug}
+//       userName={user.name}
+//     />
+//   );
+// }
+
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -262,7 +350,6 @@ export default async function DashboardPage({
       user.organizationId,
       user.branchId ?? undefined,
     );
-
     return (
       <HRDashboard
         stats={stats}
@@ -274,7 +361,6 @@ export default async function DashboardPage({
     );
   }
 
-  // Employee dashboard
   if (!user.employee) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -294,7 +380,6 @@ export default async function DashboardPage({
     user.employee.id,
     user.organizationId,
   );
-
   return (
     <EmployeeDashboard
       stats={stats}
